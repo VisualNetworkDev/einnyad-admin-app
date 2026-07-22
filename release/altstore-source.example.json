@@ -1,0 +1,35 @@
+{
+  "name": "EinnyadNails",
+  "identifier": "com.visualnetworkdev.einnyadnails.source",
+  "subtitle": "Aplicaciones privadas de EinnyadNails",
+  "apps": [
+    {
+      "name": "EinnyadNails Admin",
+      "bundleIdentifier": "com.visualnetworkdev.einnyadAdminMobile",
+      "developerName": "Visual Network Dev",
+      "subtitle": "Administración móvil de EinnyadNails",
+      "localizedDescription": "Panel privado para citas, QR, servicios, fotos, reseñas, horarios, promociones, pagos y configuración.",
+      "iconURL": "https://TU-SERVIDOR.example/assets/einnyad-admin-icon.png",
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSCameraUsageDescription": "EinnyadNails usa la cámara para escanear los códigos QR de las citas y tomar fotos de los servicios.",
+          "NSPhotoLibraryUsageDescription": "EinnyadNails necesita acceso a tus fotos para subir imágenes de servicios y leer códigos QR guardados.",
+          "NSPhotoLibraryAddUsageDescription": "EinnyadNails puede guardar imágenes administrativas que tú elijas exportar."
+        }
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "1",
+          "date": "2026-07-21",
+          "localizedDescription": "Primera versión móvil administrativa.",
+          "downloadURL": "https://TU-SERVIDOR.example/downloads/EinnyadNails-Admin-1.0.0.ipa",
+          "size": 0,
+          "sha256": "REEMPLAZAR_CON_SHA256_DEL_IPA",
+          "minOSVersion": "13.0"
+        }
+      ]
+    }
+  ]
+}

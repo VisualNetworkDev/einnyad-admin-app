@@ -1,0 +1,18 @@
+{
+  "version": "1.0.1",
+  "buildNumber": 2,
+  "required": false,
+  "releaseNotes": "Mejoras de estabilidad y nuevas funciones administrativas.",
+  "android": {
+    "version": "1.0.1",
+    "buildNumber": 2,
+    "downloadUrl": "https://TU-SERVIDOR.example/downloads/EinnyadNails-Admin-1.0.1.apk",
+    "sha256": "REEMPLAZAR_CON_SHA256_DEL_APK"
+  },
+  "ios": {
+    "version": "1.0.1",
+    "buildNumber": 2,
+    "downloadUrl": "https://TU-SERVIDOR.example/downloads/EinnyadNails-Admin-1.0.1.ipa",
+    "altStoreSourceUrl": "https://TU-SERVIDOR.example/altstore-source.json"
+  }
+}

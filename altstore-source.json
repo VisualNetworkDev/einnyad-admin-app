@@ -1,0 +1,43 @@
+{
+  "name": "EinnyadNails",
+  "subtitle": "Aplicaciones oficiales de EinnyadNails",
+  "description": "Source oficial para instalar y actualizar EinnyadNails Admin con AltStore.",
+  "iconURL": "https://raw.githubusercontent.com/VisualNetworkDev/einnyad-admin-app/main/assets/branding/einnyad-logo-1024.png",
+  "website": "https://visualnetworkdev.github.io/EinnyadNails/",
+  "tintColor": "#8E4162",
+  "featuredApps": [
+    "com.visualnetworkdev.einnyadAdminMobile"
+  ],
+  "apps": [
+    {
+      "name": "EinnyadNails Admin",
+      "bundleIdentifier": "com.visualnetworkdev.einnyadAdminMobile",
+      "developerName": "Visual Network Dev",
+      "subtitle": "Administracion movil de EinnyadNails",
+      "localizedDescription": "Panel privado para citas, QR, servicios, fotos, resenas, horarios, promociones, pagos y configuracion.",
+      "iconURL": "https://raw.githubusercontent.com/VisualNetworkDev/einnyad-admin-app/main/assets/branding/einnyad-logo-1024.png",
+      "tintColor": "#8E4162",
+      "category": "business",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "1",
+          "date": "2026-07-21",
+          "localizedDescription": "Primera version movil administrativa.",
+          "downloadURL": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.0/EinnyadNails-Admin-1.0.0.ipa",
+          "size": 0,
+          "minOSVersion": "13.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSCameraUsageDescription": "EinnyadNails usa la camara para escanear codigos QR y tomar fotos de servicios.",
+          "NSPhotoLibraryUsageDescription": "EinnyadNails usa tus fotos para cargar imagenes de servicios y leer codigos QR guardados.",
+          "NSPhotoLibraryAddUsageDescription": "EinnyadNails puede guardar imagenes administrativas que decidas exportar."
+        }
+      }
+    }
+  ],
+  "news": []
+}

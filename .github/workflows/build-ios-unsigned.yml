@@ -1,0 +1,235 @@
+name: Crear IPA EinnyadNails para iPhone
+
+on:
+  workflow_dispatch:
+    inputs:
+      admin_api_url:
+        description: URL publica del Admin API de Google Apps Script
+        required: true
+        default: https://script.google.com/macros/s/AKfycbz1hX9WxBlPpAvrkn3_cZkWPTd6z6Uh1m0IpxaSDgtTzR1CN9yuKjKCCqOlaHQplK4J/exec
+      update_manifest_url:
+        description: URL HTTPS del manifiesto de actualizaciones (puede quedar vacia)
+        required: false
+        default: https://raw.githubusercontent.com/VisualNetworkDev/einnyad-admin-app/main/update-manifest.json
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: 3.44.6
+  FLUTTER_REVISION: ee80f08bbf97172ec030b8751ceab557177a34a6
+
+concurrency:
+  group: einnyad-ios-unsigned-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios:
+    name: Compilar IPA sin firma
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Obtener el codigo
+        uses: actions/checkout@v7
+
+      - name: Instalar la version exacta de Flutter
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" remote add origin https://github.com/flutter/flutter.git
+          git -C "$RUNNER_TEMP/flutter" fetch --depth 1 origin \
+            "refs/tags/$FLUTTER_VERSION:refs/tags/$FLUTTER_VERSION"
+          git -C "$RUNNER_TEMP/flutter" checkout --detach "$FLUTTER_VERSION"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = "$FLUTTER_REVISION"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Preparar dependencias
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter config --no-analytics
+          flutter --version
+          flutter pub get
+
+      - name: Verificar el proyecto
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format --output=none --set-exit-if-changed lib test
+          flutter analyze
+          flutter test
+
+      - name: Leer version de la aplicacion
+        id: app_meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          full_version="$(awk '/^version:/{print $2; exit}' pubspec.yaml)"
+          version="${full_version%%+*}"
+          build="${full_version##*+}"
+          test -n "$version"
+          test -n "$build"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+
+      - name: Compilar la aplicacion sin certificados
+        env:
+          EINNYAD_ADMIN_API_URL: ${{ inputs.admin_api_url || 'https://script.google.com/macros/s/AKfycbz1hX9WxBlPpAvrkn3_cZkWPTd6z6Uh1m0IpxaSDgtTzR1CN9yuKjKCCqOlaHQplK4J/exec' }}
+          EINNYAD_UPDATE_MANIFEST_URL: ${{ inputs.update_manifest_url || 'https://raw.githubusercontent.com/VisualNetworkDev/einnyad-admin-app/main/update-manifest.json' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build ios \
+            --release \
+            --no-codesign \
+            --dart-define="EINNYAD_ADMIN_API_URL=$EINNYAD_ADMIN_API_URL" \
+            --dart-define="EINNYAD_UPDATE_MANIFEST_URL=$EINNYAD_UPDATE_MANIFEST_URL"
+
+      - name: Crear el archivo IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="build/ios/iphoneos/Runner.app"
+          test -d "$app"
+          chmod 755 "$app/Runner"
+          while IFS= read -r -d '' framework; do
+            executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$framework/Info.plist")"
+            test -n "$executable"
+            test -f "$framework/$executable"
+            chmod 755 "$framework/$executable"
+            test -x "$framework/$executable"
+          done < <(find "$app/Frameworks" -type d -name '*.framework' -print0)
+
+          output="build/ios/unsigned"
+          mkdir -p "$output/Payload"
+          cp -R "$app" "$output/Payload/"
+          cd "$output"
+          ipa="EinnyadNails-Admin-${{ steps.app_meta.outputs.version }}.ipa"
+          ditto -c -k --sequesterRsrc --keepParent Payload "$ipa"
+          shasum -a 256 "$ipa" > "$ipa.sha256"
+
+      - name: Validar el IPA antes de entregarlo
+        shell: bash
+        run: |
+          set -euo pipefail
+          ipa="build/ios/unsigned/EinnyadNails-Admin-${{ steps.app_meta.outputs.version }}.ipa"
+          verify="$RUNNER_TEMP/einnyad-admin-ipa"
+          rm -rf "$verify"
+          mkdir -p "$verify"
+          ditto -x -k "$ipa" "$verify"
+          app="$verify/Payload/Runner.app"
+          test -d "$app"
+          test -x "$app/Runner"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Info.plist")" = "com.visualnetworkdev.einnyadAdminMobile"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$app/Info.plist")" = "EinnyadNails Admin"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Info.plist")" = "${{ steps.app_meta.outputs.version }}"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Info.plist")" = "${{ steps.app_meta.outputs.build }}"
+          file "$app/Runner" | grep -q 'arm64'
+          while IFS= read -r -d '' framework; do
+            executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$framework/Info.plist")"
+            test -x "$framework/$executable"
+            file "$framework/$executable" | grep -q 'arm64'
+          done < <(find "$app/Frameworks" -type d -name '*.framework' -print0)
+          unzip -t "$ipa"
+
+      - name: Guardar el IPA para descargarlo
+        uses: actions/upload-artifact@v7
+        with:
+          name: EinnyadNails-Admin-iOS-unsigned
+          path: |
+            build/ios/unsigned/EinnyadNails-Admin-${{ steps.app_meta.outputs.version }}.ipa
+            build/ios/unsigned/EinnyadNails-Admin-${{ steps.app_meta.outputs.version }}.ipa.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publicar la version en GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ steps.app_meta.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "v$APP_VERSION"
+          ipa="build/ios/unsigned/EinnyadNails-Admin-$APP_VERSION.ipa"
+          hash="$ipa.sha256"
+          gh release create "$GITHUB_REF_NAME" \
+            "$ipa#EinnyadNails-Admin-$APP_VERSION.ipa" \
+            "$hash#EinnyadNails-Admin-$APP_VERSION.ipa.sha256" \
+            --title "EinnyadNails Admin $APP_VERSION" \
+            --notes "Version $APP_VERSION para iPhone, validada para instalar y actualizar con AltStore."
+
+      - name: Actualizar Source de AltStore y manifiesto
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          APP_VERSION: ${{ steps.app_meta.outputs.version }}
+          APP_BUILD: ${{ steps.app_meta.outputs.build }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ipa="build/ios/unsigned/EinnyadNails-Admin-$APP_VERSION.ipa"
+          size="$(stat -f%z "$ipa")"
+          date="$(date -u +%F)"
+          download_url="https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v$APP_VERSION/EinnyadNails-Admin-$APP_VERSION.ipa"
+          source_url="https://raw.githubusercontent.com/VisualNetworkDev/einnyad-admin-app/main/altstore-source.json"
+
+          git fetch origin main
+          git checkout -B update-altstore-source origin/main
+
+          temporary="$(mktemp)"
+          jq \
+            --arg version "$APP_VERSION" \
+            --arg build "$APP_BUILD" \
+            --arg date "$date" \
+            --arg downloadURL "$download_url" \
+            --argjson size "$size" \
+            '.apps[0].versions = ([{
+              version: $version,
+              buildVersion: $build,
+              date: $date,
+              localizedDescription: ("Actualizacion EinnyadNails Admin " + $version + "."),
+              downloadURL: $downloadURL,
+              size: $size,
+              minOSVersion: "13.0"
+            }] + [.apps[0].versions[] | select(.version != $version or .buildVersion != $build)])' \
+            altstore-source.json > "$temporary"
+          mv "$temporary" altstore-source.json
+
+          temporary="$(mktemp)"
+          jq \
+            --arg version "$APP_VERSION" \
+            --argjson build "$APP_BUILD" \
+            --arg downloadURL "$download_url" \
+            --arg sourceURL "$source_url" \
+            '.version = $version
+             | .buildNumber = $build
+             | .releaseNotes = ("Actualizacion EinnyadNails Admin " + $version + ".")
+             | .ios.version = $version
+             | .ios.buildNumber = $build
+             | .ios.downloadUrl = $downloadURL
+             | .ios.altStoreSourceUrl = $sourceURL' \
+            update-manifest.json > "$temporary"
+          mv "$temporary" update-manifest.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add altstore-source.json update-manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: publish AltStore metadata for $APP_VERSION"
+            git push origin HEAD:main
+          fi
+
+      - name: Resumen
+        shell: bash
+        run: |
+          {
+            echo "## EinnyadNails Admin para iPhone"
+            echo
+            echo "Descarga el artefacto **EinnyadNails-Admin-iOS-unsigned**."
+            echo "Dentro estan el IPA sin firma y su SHA-256 para instalar con AltStore desde Windows."
+          } >> "$GITHUB_STEP_SUMMARY"

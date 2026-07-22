@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "buildNumber": 1,
+  "required": false,
+  "releaseNotes": "Primera version movil administrativa de EinnyadNails.",
+  "android": {
+    "version": "1.0.0",
+    "buildNumber": 1,
+    "downloadUrl": "",
+    "sha256": ""
+  },
+  "ios": {
+    "version": "1.0.0",
+    "buildNumber": 1,
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.0/EinnyadNails-Admin-1.0.0.ipa",
+    "altStoreSourceUrl": "https://raw.githubusercontent.com/VisualNetworkDev/einnyad-admin-app/main/altstore-source.json"
+  }
+}
