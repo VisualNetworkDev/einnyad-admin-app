@@ -118,7 +118,9 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      _app(ServiceForm(controller: controller, service: controller.services.first)),
+      _app(
+        ServiceForm(controller: controller, service: controller.services.first),
+      ),
     );
     await tester.pump();
 
