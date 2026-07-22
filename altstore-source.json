@@ -20,6 +20,15 @@
       "category": "business",
       "versions": [
         {
+          "version": "1.0.1",
+          "buildVersion": "2",
+          "date": "2026-07-22",
+          "localizedDescription": "Actualizacion EinnyadNails Admin 1.0.1.",
+          "downloadURL": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.1/EinnyadNails-Admin-1.0.1.ipa",
+          "size": 8663611,
+          "minOSVersion": "13.0"
+        },
+        {
           "version": "1.0.0",
           "buildVersion": "1",
           "date": "2026-07-22",
