@@ -22,10 +22,10 @@
         {
           "version": "1.0.0",
           "buildVersion": "1",
-          "date": "2026-07-21",
-          "localizedDescription": "Primera version movil administrativa.",
+          "date": "2026-07-22",
+          "localizedDescription": "Actualizacion EinnyadNails Admin 1.0.0.",
           "downloadURL": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.0/EinnyadNails-Admin-1.0.0.ipa",
-          "size": 0,
+          "size": 8662567,
           "minOSVersion": "13.0"
         }
       ],

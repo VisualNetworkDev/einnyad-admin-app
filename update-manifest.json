@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "buildNumber": 1,
   "required": false,
-  "releaseNotes": "Primera version movil administrativa de EinnyadNails.",
+  "releaseNotes": "Actualizacion EinnyadNails Admin 1.0.0.",
   "android": {
     "version": "1.0.0",
     "buildNumber": 1,
