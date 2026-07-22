@@ -1,4 +1,4 @@
-# Actualizaciones sin GitHub
+# Actualizaciones desde GitHub o cualquier servidor HTTPS
 
 La app acepta una URL HTTPS configurable desde `Ajustes > Actualizaciones de la app`. Esa URL devuelve un JSON con Android e iOS.
 
