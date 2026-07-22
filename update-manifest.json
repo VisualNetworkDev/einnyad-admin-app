@@ -2,12 +2,12 @@
   "version": "1.0.2",
   "buildNumber": 3,
   "required": false,
-  "releaseNotes": "Actualizacion EinnyadNails Admin 1.0.2.",
+  "releaseNotes": "Corrige sobreposiciones, oculta URLs tecnicas y mejora las tarjetas del Resumen.",
   "android": {
-    "version": "1.0.1",
-    "buildNumber": 2,
-    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.1/EinnyadNails-Admin-1.0.1-release.apk",
-    "sha256": "3f625e08cfe6f0084015f7c75526c8f2b6a421c5b95435d5ca816f469f4e3417"
+    "version": "1.0.2",
+    "buildNumber": 3,
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.2/EinnyadNails-Admin-1.0.2-release.apk",
+    "sha256": "5a17748322b737a7e06803487b846884dfc874a139f841e7c2fc827b075f17e9"
   },
   "ios": {
     "version": "1.0.2",
