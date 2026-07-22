@@ -53,13 +53,11 @@ class AdminApi {
       'userAgent': AppConfig.userAgent,
     };
     try {
-      final response = await _client
-          .post(
-            _endpoint,
-            headers: const {'Accept': 'application/json'},
-            body: {'action': action, 'payload': jsonEncode(body)},
-          )
-          .timeout(const Duration(seconds: 70));
+      final response = await _postForm({
+        'mobile': '1',
+        'action': action,
+        'payload': jsonEncode(body),
+      }, timeout: const Duration(seconds: 70));
       return _decodeResponse(response);
     } on AdminApiException {
       rethrow;
@@ -84,8 +82,6 @@ class AdminApi {
     if (jpegBytes.lengthInBytes > 6 * 1024 * 1024) {
       throw const AdminApiException('La imagen supera el límite de 6 MB.');
     }
-    final requestId =
-        'mobile_${DateTime.now().millisecondsSinceEpoch}_${jpegBytes.length}';
     final payload = {
       'sessionToken': sessionToken,
       'userAgent': AppConfig.userAgent,
@@ -94,40 +90,81 @@ class AdminApi {
       'dataUrl': 'data:image/jpeg;base64,${base64Encode(jpegBytes)}',
     };
     try {
-      final response = await _client
-          .post(
-            _endpoint,
-            headers: const {'Accept': 'text/html,application/json'},
-            body: {
-              'bridge': '1',
-              'requestId': requestId,
-              'action': 'uploadImage',
-              'payload': jsonEncode(payload),
-            },
-          )
-          .timeout(const Duration(seconds: 130));
-      final raw = utf8.decode(response.bodyBytes);
-      if (raw.trimLeft().startsWith('{')) {
-        return _decodeEnvelope(jsonDecode(raw));
-      }
-      final match = RegExp(
-        r'var payload=(\{.*?\});var targets=',
-        dotAll: true,
-      ).firstMatch(raw);
-      if (match == null) {
-        throw const AdminApiException(
-          'El servidor no confirmó la subida de la imagen.',
-        );
-      }
-      return _decodeEnvelope(jsonDecode(match.group(1)!));
+      final response = await _postForm({
+        'mobile': '1',
+        'action': 'uploadImage',
+        'payload': jsonEncode(payload),
+      }, timeout: const Duration(seconds: 130));
+      return _decodeResponse(response);
     } on AdminApiException {
       rethrow;
     } on TimeoutException {
       throw const AdminApiException('La subida de imagen tardó demasiado.');
+    } on FormatException {
+      throw const AdminApiException(
+        'El servidor no confirmó la subida de la imagen.',
+      );
     } catch (error) {
       throw AdminApiException('No se pudo subir la imagen: $error');
     }
   }
+
+  Future<http.Response> _postForm(
+    Map<String, String> fields, {
+    required Duration timeout,
+  }) async {
+    var uri = _endpoint;
+    var method = 'POST';
+    for (var redirects = 0; redirects <= 5; redirects += 1) {
+      final request = http.Request(method, uri)
+        ..followRedirects = false
+        ..maxRedirects = 0
+        ..headers['Accept'] = 'application/json';
+      if (method == 'POST') request.bodyFields = fields;
+
+      final streamed = await _client.send(request).timeout(timeout);
+      final response = await http.Response.fromStream(
+        streamed,
+      ).timeout(timeout);
+      if (!_isRedirect(response.statusCode)) return response;
+
+      if (redirects == 5) {
+        throw const AdminApiException(
+          'El servidor realizó demasiadas redirecciones.',
+        );
+      }
+      final location = response.headers['location'];
+      final redirect = location == null ? null : uri.resolve(location);
+      if (redirect == null || !_isAllowedRedirect(redirect)) {
+        throw const AdminApiException(
+          'El servidor devolvió una redirección no válida.',
+        );
+      }
+      uri = redirect;
+      if (response.statusCode == 301 ||
+          response.statusCode == 302 ||
+          response.statusCode == 303) {
+        method = 'GET';
+      }
+    }
+    throw const AdminApiException('No se pudo completar la solicitud.');
+  }
+
+  bool _isAllowedRedirect(Uri redirect) {
+    if (redirect.scheme != 'https' || !redirect.hasAuthority) return false;
+    if (redirect.host == _endpoint.host) return true;
+    if (_endpoint.host != 'script.google.com') return false;
+    return redirect.host == 'script.googleusercontent.com' ||
+        redirect.host.endsWith('.script.googleusercontent.com') ||
+        redirect.host.endsWith('-script.googleusercontent.com');
+  }
+
+  static bool _isRedirect(int statusCode) =>
+      statusCode == 301 ||
+      statusCode == 302 ||
+      statusCode == 303 ||
+      statusCode == 307 ||
+      statusCode == 308;
 
   JsonMap _decodeResponse(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 400) {
@@ -135,7 +172,14 @@ class AdminApi {
         'El servidor respondió con estado ${response.statusCode}.',
       );
     }
-    return _decodeEnvelope(jsonDecode(utf8.decode(response.bodyBytes)));
+    final raw = utf8.decode(response.bodyBytes);
+    try {
+      return _decodeEnvelope(jsonDecode(raw));
+    } on FormatException {
+      throw const AdminApiException(
+        'El servidor no devolvió JSON. Actualiza la app o revisa el deployment del Admin API.',
+      );
+    }
   }
 
   JsonMap _decodeEnvelope(Object? decoded) {
