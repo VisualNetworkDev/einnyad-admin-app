@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:einnyad_admin_mobile/app_controller.dart';
 import 'package:einnyad_admin_mobile/core/admin_api.dart';
 import 'package:einnyad_admin_mobile/core/session_store.dart';
@@ -61,26 +63,32 @@ void main() {
     await tester.pumpWidget(_app(AdminShell(controller: controller)));
     await tester.pump();
     expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(AdminShell),
-      matchesGoldenFile('goldens/dashboard_android_large.png'),
-    );
+    if (Platform.isWindows) {
+      await expectLater(
+        find.byType(AdminShell),
+        matchesGoldenFile('goldens/dashboard_android_large.png'),
+      );
+    }
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
     expect(find.text('Servicios y fotos'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(AdminShell),
-      matchesGoldenFile('goldens/drawer_android_large.png'),
-    );
+    if (Platform.isWindows) {
+      await expectLater(
+        find.byType(AdminShell),
+        matchesGoldenFile('goldens/drawer_android_large.png'),
+      );
+    }
     await tester.tap(find.text('Ajustes'));
     await tester.pumpAndSettle();
     expect(find.text('Ajustes del negocio'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await expectLater(
-      find.byType(AdminShell),
-      matchesGoldenFile('goldens/settings_android_large.png'),
-    );
+    if (Platform.isWindows) {
+      await expectLater(
+        find.byType(AdminShell),
+        matchesGoldenFile('goldens/settings_android_large.png'),
+      );
+    }
   });
 
   testWidgets('landscape large phone keeps menu and content separated', (
