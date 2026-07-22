@@ -6,8 +6,8 @@
   "android": {
     "version": "1.0.0",
     "buildNumber": 1,
-    "downloadUrl": "",
-    "sha256": ""
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.0/EinnyadNails-Admin-1.0.0-release.apk",
+    "sha256": "ba4c8641ec14f3848b13c78dfe0e60ccdf44e5c8f320a3077bcca0e887823f5a"
   },
   "ios": {
     "version": "1.0.0",
