@@ -463,18 +463,21 @@ class _ServiceFormState extends State<ServiceForm> {
             label: 'Foto principal',
             controller: field('image'),
             onUpload: () => _upload('image', 'service-main'),
+            onRemove: () => setState(() => field('image').clear()),
           ),
           const SizedBox(height: 14),
           _PhotoField(
             label: 'Foto antes',
             controller: field('beforeImage'),
             onUpload: () => _upload('beforeImage', 'service-before'),
+            onRemove: () => setState(() => field('beforeImage').clear()),
           ),
           const SizedBox(height: 14),
           _PhotoField(
             label: 'Foto después',
             controller: field('afterImage'),
             onUpload: () => _upload('afterImage', 'service-after'),
+            onRemove: () => setState(() => field('afterImage').clear()),
           ),
           const SizedBox(height: 14),
           TextFormField(
@@ -510,10 +513,12 @@ class _PhotoField extends StatelessWidget {
     required this.label,
     required this.controller,
     required this.onUpload,
+    required this.onRemove,
   });
   final String label;
   final TextEditingController controller;
   final VoidCallback onUpload;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -533,11 +538,6 @@ class _PhotoField extends StatelessWidget {
           ),
         ),
       if (controller.text.trim().isNotEmpty) const SizedBox(height: 8),
-      TextFormField(
-        controller: controller,
-        decoration: InputDecoration(labelText: '$label (URL)'),
-      ),
-      const SizedBox(height: 8),
       Row(
         children: [
           Expanded(
@@ -551,7 +551,7 @@ class _PhotoField extends StatelessWidget {
             const SizedBox(width: 8),
             IconButton(
               tooltip: 'Quitar foto',
-              onPressed: () => controller.clear(),
+              onPressed: onRemove,
               icon: const Icon(Icons.delete_outline),
             ),
           ],

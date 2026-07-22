@@ -91,6 +91,62 @@ void main() {
     }
   });
 
+  testWidgets('settings use external labels and hide technical update URLs', (
+    tester,
+  ) async {
+    await _setSize(tester, const Size(430, 932));
+    final controller = _controller();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_app(SettingsScreen(controller: controller)));
+    await tester.pump();
+
+    expect(find.textContaining('URL HTTPS del manifiesto'), findsNothing);
+    expect(find.text('Guardar URL'), findsNothing);
+
+    final labelRect = tester.getRect(find.text('Nombre del negocio'));
+    final firstFieldRect = tester.getRect(find.byType(TextField).first);
+    expect(labelRect.bottom, lessThanOrEqualTo(firstFieldRect.top));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('service photo URLs stay hidden while upload controls remain', (
+    tester,
+  ) async {
+    await _setSize(tester, const Size(430, 3000));
+    final controller = _controller();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      _app(ServiceForm(controller: controller, service: controller.services.first)),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('(URL)'), findsNothing);
+    expect(find.textContaining('https://'), findsNothing);
+    expect(find.text('Subir Foto principal'), findsOneWidget);
+    expect(find.text('Subir Foto antes'), findsOneWidget);
+    expect(find.text('Subir Foto después'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('dashboard highlights use the full mobile width', (tester) async {
+    await _setSize(tester, const Size(430, 4000));
+    final controller = _controller();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      _app(DashboardScreen(controller: controller, openAppointments: () {})),
+    );
+    await tester.pump();
+
+    final width = tester
+        .getSize(find.byKey(const Key('dashboard-highlight-next')))
+        .width;
+    expect(width, greaterThan(380));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('landscape large phone keeps menu and content separated', (
     tester,
   ) async {
@@ -173,7 +229,9 @@ AdminController _controller() {
           'price': 45,
           'durationMinutes': 60,
           'available': 'Yes',
-          'image': '',
+          'image': 'https://example.com/main.jpg',
+          'beforeImage': 'https://example.com/before.jpg',
+          'afterImage': 'https://example.com/after.jpg',
         },
       ],
       'reviews': [

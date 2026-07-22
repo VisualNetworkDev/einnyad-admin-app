@@ -23,7 +23,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _cashEnabled = 'Yes';
   String _promoType = 'percent';
   String _promoActive = 'Yes';
-  String _updateUrl = '';
 
   TextEditingController field(String key, [Object? value]) => _fields
       .putIfAbsent(key, () => TextEditingController(text: textOf(value)));
@@ -32,12 +31,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadFromController();
-    widget.controller.updateManifestUrl().then((value) {
-      if (mounted) {
-        field('updateUrl').text = value;
-        setState(() => _updateUrl = value);
-      }
-    });
   }
 
   void _loadFromController() {
@@ -376,20 +369,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: hour.open,
-                      readOnly: true,
-                      onTap: () => _pickTime(hour.open),
-                      decoration: const InputDecoration(labelText: 'Abre'),
+                    child: _LabeledControl(
+                      label: 'Abre',
+                      child: TextField(
+                        controller: hour.open,
+                        readOnly: true,
+                        onTap: () => _pickTime(hour.open),
+                        decoration: const InputDecoration(),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 9),
                   Expanded(
-                    child: TextField(
-                      controller: hour.close,
-                      readOnly: true,
-                      onTap: () => _pickTime(hour.close),
-                      decoration: const InputDecoration(labelText: 'Cierra'),
+                    child: _LabeledControl(
+                      label: 'Cierra',
+                      child: TextField(
+                        controller: hour.close,
+                        readOnly: true,
+                        onTap: () => _pickTime(hour.close),
+                        decoration: const InputDecoration(),
+                      ),
                     ),
                   ),
                 ],
@@ -410,29 +409,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context,
       ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
     ),
-    TextField(
-      controller: field('blockDate'),
-      readOnly: true,
-      onTap: () => _pickDate(field('blockDate')),
-      decoration: const InputDecoration(labelText: 'Fecha'),
+    _LabeledControl(
+      label: 'Fecha',
+      child: TextField(
+        controller: field('blockDate'),
+        readOnly: true,
+        onTap: () => _pickDate(field('blockDate')),
+        decoration: const InputDecoration(),
+      ),
     ),
     Row(
       children: [
         Expanded(
-          child: TextField(
-            controller: field('blockStart'),
-            readOnly: true,
-            onTap: () => _pickTime(field('blockStart')),
-            decoration: const InputDecoration(labelText: 'Inicio'),
+          child: _LabeledControl(
+            label: 'Inicio',
+            child: TextField(
+              controller: field('blockStart'),
+              readOnly: true,
+              onTap: () => _pickTime(field('blockStart')),
+              decoration: const InputDecoration(),
+            ),
           ),
         ),
         const SizedBox(width: 9),
         Expanded(
-          child: TextField(
-            controller: field('blockEnd'),
-            readOnly: true,
-            onTap: () => _pickTime(field('blockEnd')),
-            decoration: const InputDecoration(labelText: 'Fin'),
+          child: _LabeledControl(
+            label: 'Fin',
+            child: TextField(
+              controller: field('blockEnd'),
+              readOnly: true,
+              onTap: () => _pickTime(field('blockEnd')),
+              decoration: const InputDecoration(),
+            ),
           ),
         ),
       ],
@@ -495,15 +503,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _text('promoTitleFr', 'Titre (FR)'),
     _text('promoDescription', 'Descripción (ES)', lines: 3),
     _text('promoDescriptionFr', 'Description (FR)', lines: 3),
-    DropdownButtonFormField<String>(
-      isExpanded: true,
-      initialValue: _promoType,
-      decoration: const InputDecoration(labelText: 'Tipo'),
-      items: const [
-        DropdownMenuItem(value: 'percent', child: Text('Porcentaje')),
-        DropdownMenuItem(value: 'fixed', child: Text('Monto fijo')),
-      ],
-      onChanged: (value) => setState(() => _promoType = value ?? _promoType),
+    _LabeledControl(
+      label: 'Tipo',
+      child: DropdownButtonFormField<String>(
+        isExpanded: true,
+        initialValue: _promoType,
+        decoration: const InputDecoration(),
+        items: const [
+          DropdownMenuItem(value: 'percent', child: Text('Porcentaje')),
+          DropdownMenuItem(value: 'fixed', child: Text('Monto fijo')),
+        ],
+        onChanged: (value) => setState(() => _promoType = value ?? _promoType),
+      ),
     ),
     _text(
       'promoValue',
@@ -642,27 +653,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     ),
-    TextFormField(
-      controller: field('updateUrl'),
-      keyboardType: TextInputType.url,
-      decoration: const InputDecoration(
-        labelText: 'URL HTTPS del manifiesto de actualización',
-        helperText: 'Se puede cambiar aquí sin recompilar la app.',
-      ),
-      onChanged: (value) => _updateUrl = value,
-    ),
-    OutlinedButton.icon(
-      onPressed: () async {
-        await widget.controller.saveUpdateManifestUrl(_updateUrl);
-        if (mounted) showMessage(context, 'URL de actualización guardada.');
-      },
-      icon: const Icon(Icons.save_outlined),
-      label: const Text('Guardar URL'),
-    ),
     FilledButton.icon(
       onPressed: () async {
         try {
-          await widget.controller.saveUpdateManifestUrl(_updateUrl);
           final update = await widget.controller.checkForUpdate();
           if (!mounted) return;
           showMessage(
@@ -726,26 +719,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
     int lines = 1,
     TextInputType? keyboard,
     String? prefix,
-  }) => TextField(
-    controller: field(key),
-    maxLines: lines,
-    keyboardType: keyboard,
-    decoration: InputDecoration(labelText: label, prefixText: prefix),
+  }) => _LabeledControl(
+    label: label,
+    child: TextField(
+      controller: field(key),
+      maxLines: lines,
+      keyboardType: keyboard,
+      decoration: InputDecoration(prefixText: prefix),
+    ),
   );
 
   Widget _yesNo(String label, String value, ValueChanged<String> changed) =>
-      DropdownButtonFormField<String>(
-        isExpanded: true,
-        initialValue: value,
-        decoration: InputDecoration(labelText: label),
-        items: const [
-          DropdownMenuItem(value: 'Yes', child: Text('Sí')),
-          DropdownMenuItem(value: 'No', child: Text('No')),
-        ],
-        onChanged: (next) {
-          if (next != null) changed(next);
-        },
+      _LabeledControl(
+        label: label,
+        child: DropdownButtonFormField<String>(
+          isExpanded: true,
+          initialValue: value,
+          decoration: const InputDecoration(),
+          items: const [
+            DropdownMenuItem(value: 'Yes', child: Text('Sí')),
+            DropdownMenuItem(value: 'No', child: Text('No')),
+          ],
+          onChanged: (next) {
+            if (next != null) changed(next);
+          },
+        ),
       );
+}
+
+class _LabeledControl extends StatelessWidget {
+  const _LabeledControl({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(left: 4, bottom: 7),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      child,
+    ],
+  );
 }
 
 class _SettingsCard extends StatelessWidget {
@@ -765,11 +789,15 @@ class _SettingsCard extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: Card(
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
         leading: Icon(icon),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+        childrenPadding: const EdgeInsets.fromLTRB(18, 8, 18, 20),
         expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final child in children) ...[child, const SizedBox(height: 12)],

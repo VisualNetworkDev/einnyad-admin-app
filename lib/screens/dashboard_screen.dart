@@ -150,6 +150,11 @@ class DashboardScreen extends StatelessWidget {
                   ),
           ),
           const SizedBox(height: 24),
+          const SectionHeading(
+            'Actividad reciente',
+            subtitle: 'Lo más importante en un solo vistazo.',
+          ),
+          const SizedBox(height: 12),
           _Highlights(dashboard: dashboard),
           const SizedBox(height: 30),
         ],
@@ -215,7 +220,9 @@ class _Highlights extends StatelessWidget {
       builder: (context, constraints) {
         final cards = [
           _HighlightCard(
+            key: const Key('dashboard-highlight-next'),
             title: 'Próxima cita',
+            icon: Icons.event_available_outlined,
             child: next.isEmpty
                 ? const Text('No hay próxima cita.')
                 : Text(
@@ -223,7 +230,9 @@ class _Highlights extends StatelessWidget {
                   ),
           ),
           _HighlightCard(
+            key: const Key('dashboard-highlight-last'),
             title: 'Última orden',
+            icon: Icons.receipt_long_outlined,
             child: last.isEmpty
                 ? const Text('No hay órdenes.')
                 : Text(
@@ -231,7 +240,9 @@ class _Highlights extends StatelessWidget {
                   ),
           ),
           _HighlightCard(
+            key: const Key('dashboard-highlight-services'),
             title: 'Servicios más pedidos',
+            icon: Icons.auto_awesome_outlined,
             child: top.isEmpty
                 ? const Text('Sin información todavía.')
                 : Column(
@@ -250,8 +261,12 @@ class _Highlights extends StatelessWidget {
         ];
         if (constraints.maxWidth < 760) {
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final card in cards) ...[card, const SizedBox(height: 12)],
+              for (var index = 0; index < cards.length; index++) ...[
+                cards[index],
+                if (index < cards.length - 1) const SizedBox(height: 12),
+              ],
             ],
           );
         }
@@ -270,20 +285,49 @@ class _Highlights extends StatelessWidget {
 }
 
 class _HighlightCard extends StatelessWidget {
-  const _HighlightCard({required this.title, required this.child});
+  const _HighlightCard({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
   final String title;
+  final IconData icon;
   final Widget child;
 
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
       padding: const EdgeInsets.all(18),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 10),
-          child,
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              icon,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                child,
+              ],
+            ),
+          ),
         ],
       ),
     ),
