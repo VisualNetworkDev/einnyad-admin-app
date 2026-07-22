@@ -2,12 +2,12 @@
   "version": "1.0.1",
   "buildNumber": 2,
   "required": false,
-  "releaseNotes": "Actualizacion EinnyadNails Admin 1.0.1.",
+  "releaseNotes": "Corrige la respuesta inesperada de Apps Script en Android y iPhone.",
   "android": {
-    "version": "1.0.0",
-    "buildNumber": 1,
-    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.0/EinnyadNails-Admin-1.0.0-release.apk",
-    "sha256": "ba4c8641ec14f3848b13c78dfe0e60ccdf44e5c8f320a3077bcca0e887823f5a"
+    "version": "1.0.1",
+    "buildNumber": 2,
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.1/EinnyadNails-Admin-1.0.1-release.apk",
+    "sha256": "3f625e08cfe6f0084015f7c75526c8f2b6a421c5b95435d5ca816f469f4e3417"
   },
   "ios": {
     "version": "1.0.1",
