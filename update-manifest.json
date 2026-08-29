@@ -1,13 +1,13 @@
 {
-  "version": "1.0.2",
-  "buildNumber": 3,
+  "version": "1.0.3",
+  "buildNumber": 4,
   "required": false,
-  "releaseNotes": "Corrige sobreposiciones, oculta URLs tecnicas y mejora las tarjetas del Resumen.",
+  "releaseNotes": "Activa avisos Android para reservaciones nuevas y nuevas versiones de la app.",
   "android": {
-    "version": "1.0.2",
-    "buildNumber": 3,
-    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.2/EinnyadNails-Admin-1.0.2-release.apk",
-    "sha256": "5a17748322b737a7e06803487b846884dfc874a139f841e7c2fc827b075f17e9"
+    "version": "1.0.3",
+    "buildNumber": 4,
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.3/EinnyadNails-Admin-1.0.3-release.apk",
+    "sha256": "4fa194cf9fd5fa99409c1710e32d2c36d4d779e6ce1589e8e39301e413b972f7"
   },
   "ios": {
     "version": "1.0.2",

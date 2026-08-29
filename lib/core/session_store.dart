@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SavedSession {
@@ -20,6 +22,9 @@ class SessionStore {
   static const _emailKey = 'einnyad_admin_email';
   static const _nameKey = 'einnyad_admin_name';
   static const updateUrlKey = 'einnyad_update_manifest_url';
+  static const _seenAppointmentIdsKey =
+      'einnyad_notification_seen_appointment_ids';
+  static const _lastNotifiedUpdateKey = 'einnyad_notification_last_update';
 
   final FlutterSecureStorage _storage;
 
@@ -60,4 +65,39 @@ class SessionStore {
       await _storage.write(key: updateUrlKey, value: url);
     }
   }
+
+  Future<Set<String>?> readSeenAppointmentIds() async {
+    final raw = await _storage.read(key: _seenAppointmentIdsKey);
+    if (raw == null) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <String>{};
+      return decoded
+          .map((value) => value.toString().trim())
+          .where((value) => value.isNotEmpty)
+          .toSet();
+    } on FormatException {
+      return <String>{};
+    }
+  }
+
+  Future<void> saveSeenAppointmentIds(Iterable<String> ids) async {
+    final normalized =
+        ids
+            .map((value) => value.trim())
+            .where((value) => value.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    await _storage.write(
+      key: _seenAppointmentIdsKey,
+      value: jsonEncode(normalized),
+    );
+  }
+
+  Future<String> readLastNotifiedUpdate() async =>
+      (await _storage.read(key: _lastNotifiedUpdateKey))?.trim() ?? '';
+
+  Future<void> saveLastNotifiedUpdate(String value) =>
+      _storage.write(key: _lastNotifiedUpdateKey, value: value.trim());
 }
