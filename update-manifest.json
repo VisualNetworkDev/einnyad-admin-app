@@ -1,13 +1,13 @@
 {
-  "version": "1.0.3",
-  "buildNumber": 4,
+  "version": "1.0.4",
+  "buildNumber": 5,
   "required": false,
-  "releaseNotes": "Activa avisos Android para reservaciones nuevas y nuevas versiones de la app.",
+  "releaseNotes": "Acceso rápido Android con huella o rostro compatible. Conserva la sesión ante fallos temporales y permite reintentar la carga del panel sin volver a escribir la contraseña.",
   "android": {
-    "version": "1.0.3",
-    "buildNumber": 4,
-    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.3/EinnyadNails-Admin-1.0.3-release.apk",
-    "sha256": "4fa194cf9fd5fa99409c1710e32d2c36d4d779e6ce1589e8e39301e413b972f7"
+    "version": "1.0.4",
+    "buildNumber": 5,
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.4/EinnyadNails-Admin-1.0.4-release.apk",
+    "sha256": "b8197a830e241c5660d947e8cd87d81e42db308cd7b01bbda912152db82053b5"
   },
   "ios": {
     "version": "1.0.2",
