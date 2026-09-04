@@ -1,13 +1,13 @@
 {
-  "version": "1.0.3",
-  "buildNumber": 4,
+  "version": "1.0.5",
+  "buildNumber": 6,
   "required": false,
-  "releaseNotes": "Activa avisos Android para reservaciones nuevas y nuevas versiones de la app.",
+  "releaseNotes": "Recuperada directamente desde la versión completa 1.0.3. Conserva todas sus funciones, notificaciones y actualización interna; agrega acceso rápido mediante huella o rostro compatible.",
   "android": {
-    "version": "1.0.3",
-    "buildNumber": 4,
-    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.3/EinnyadNails-Admin-1.0.3-release.apk",
-    "sha256": "4fa194cf9fd5fa99409c1710e32d2c36d4d779e6ce1589e8e39301e413b972f7"
+    "version": "1.0.5",
+    "buildNumber": 6,
+    "downloadUrl": "https://github.com/VisualNetworkDev/einnyad-admin-app/releases/download/v1.0.5/EinnyadNails-Admin-1.0.5-release.apk",
+    "sha256": "f9928e5bd731936f8a862eb667cdbc894d1cc190d7139ebf608c5f8a4df1d4cd"
   },
   "ios": {
     "version": "1.0.2",

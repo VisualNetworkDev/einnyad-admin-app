@@ -28,6 +28,9 @@ class SessionStore {
 
   final FlutterSecureStorage _storage;
 
+  Future<String> readEmail() async =>
+      (await _storage.read(key: _emailKey))?.trim() ?? '';
+
   Future<SavedSession?> read() async {
     final values = await _storage.readAll();
     final token = values[_tokenKey]?.trim() ?? '';

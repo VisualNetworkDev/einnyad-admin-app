@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_controller.dart';
+import '../core/biometric_access.dart';
 import '../widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,12 +18,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _hidePassword = true;
+  bool _enableBiometrics = false;
   String _error = '';
 
   @override
   void initState() {
     super.initState();
-    _email.text = widget.controller.session?.email ?? '';
+    _email.text = widget.controller.rememberedEmail;
+    _enableBiometrics = widget.controller.biometricState.enabled;
   }
 
   @override
@@ -36,8 +39,54 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _error = '');
     try {
-      await widget.controller.login(_email.text, _password.text);
+      await widget.controller.login(
+        _email.text,
+        _password.text,
+        enableBiometrics: _enableBiometrics,
+      );
       _password.clear();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  Future<void> _quickLogin() async {
+    setState(() => _error = '');
+    try {
+      await widget.controller.loginWithBiometrics();
+    } on BiometricAccessException catch (error) {
+      if (mounted && !error.cancelled) {
+        setState(() => _error = error.message);
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  Future<void> _forgetQuickLogin() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Quitar el acceso rápido?'),
+        content: const Text(
+          'Se borrará el acceso guardado en este teléfono. Podrás seguir entrando con tu correo y contraseña.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Quitar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await widget.controller.forgetBiometrics();
+      if (mounted) setState(() => _enableBiometrics = false);
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     }
@@ -85,6 +134,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(height: 18),
+                          if (widget.controller.biometricState.enabled) ...[
+                            FilledButton.icon(
+                              onPressed: widget.controller.busy
+                                  ? null
+                                  : _quickLogin,
+                              icon: const Icon(Icons.fingerprint),
+                              label: const Text('Entrar con huella o rostro'),
+                            ),
+                            TextButton(
+                              onPressed: widget.controller.busy
+                                  ? null
+                                  : _forgetQuickLogin,
+                              child: const Text(
+                                'Quitar acceso rápido de este teléfono',
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                'O entra con tu contraseña',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                           TextFormField(
                             controller: _email,
                             keyboardType: TextInputType.emailAddress,
@@ -123,6 +196,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? 'Escribe la contraseña.'
                                 : null,
                           ),
+                          if (widget.controller.biometricState.available) ...[
+                            const SizedBox(height: 12),
+                            CheckboxListTile(
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              value: _enableBiometrics,
+                              onChanged: widget.controller.busy
+                                  ? null
+                                  : (value) => setState(
+                                      () => _enableBiometrics = value ?? false,
+                                    ),
+                              title: const Text(
+                                'Activar acceso rápido en este teléfono',
+                              ),
+                              subtitle: const Text(
+                                'Con huella o rostro compatible. Actívalo solo en tu teléfono personal.',
+                              ),
+                            ),
+                          ],
                           if (_error.isNotEmpty) ...[
                             const SizedBox(height: 14),
                             Text(
