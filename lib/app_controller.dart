@@ -1,18 +1,28 @@
 import 'package:flutter/foundation.dart';
 
 import 'core/admin_api.dart';
+import 'core/biometric_access.dart';
 import 'core/session_store.dart';
 import 'core/update_service.dart';
 import 'core/value_helpers.dart';
 
-enum AdminStatus { initializing, signedOut, ready }
+enum AdminStatus { initializing, signedOut, connectionError, ready }
 
 class AdminController extends ChangeNotifier {
-  AdminController(this._api, this._store, this._updates);
+  AdminController(
+    this._api,
+    this._store,
+    this._updates, {
+    BiometricAccess? biometrics,
+  }) : _biometrics = biometrics ?? BiometricAccess();
 
   final AdminApi _api;
   final SessionStore _store;
   final UpdateService _updates;
+  final BiometricAccess _biometrics;
+  BiometricState biometricState = const BiometricState();
+  String rememberedEmail = '';
+  String accessNotice = '';
 
   AdminStatus status = AdminStatus.initializing;
   JsonMap data = {};
@@ -34,27 +44,46 @@ class AdminController extends ChangeNotifier {
   JsonMap get availability => mapOf(data['availability']);
 
   Future<void> initialize() async {
+    rememberedEmail = await _store.readEmail();
+    biometricState = await _biometrics.status();
     final saved = await _store.read();
-    if (saved == null) {
+    // A saved background session must not bypass an enabled biometric login.
+    if (saved == null || biometricState.enabled) {
       status = AdminStatus.signedOut;
       notifyListeners();
       return;
     }
     session = saved;
     _api.sessionToken = saved.token;
+    await retryConnection();
+  }
+
+  Future<void> retryConnection() async {
+    if (session == null) return;
+    _setBusy(true, 'Cargando el panel…');
     try {
       data = await _api.call('getAdminData');
       status = AdminStatus.ready;
-    } on AdminApiException {
-      await _store.clear();
-      session = null;
-      _api.sessionToken = '';
-      status = AdminStatus.signedOut;
+      lastError = '';
+    } on AdminApiException catch (error) {
+      if (error.sessionExpired) {
+        await _expireSession();
+      } else {
+        status = AdminStatus.connectionError;
+      }
+      lastError = error.message;
+    } finally {
+      _setBusy(false);
     }
-    notifyListeners();
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(
+    String email,
+    String password, {
+    bool enableBiometrics = false,
+    bool fromBiometrics = false,
+  }) async {
+    if (busy) return;
     _setBusy(true, 'Verificando acceso…');
     try {
       final result = await _api.login(email, password);
@@ -69,15 +98,57 @@ class AdminController extends ChangeNotifier {
       session = saved;
       _api.sessionToken = saved.token;
       await _store.save(saved);
-      data = await _api.call('getAdminData');
-      status = AdminStatus.ready;
+      rememberedEmail = saved.email;
+      accessNotice = '';
+      // A manual login replaces old credentials only after backend validation.
+      if (!fromBiometrics && biometricState.enabled) {
+        await _biometrics.delete();
+        biometricState = await _biometrics.status();
+      }
+      if (enableBiometrics && biometricState.available) {
+        try {
+          await _biometrics.save(saved.email, password);
+          accessNotice = 'Acceso rápido activado en este teléfono.';
+        } on BiometricAccessException {
+          accessNotice =
+              'Entraste correctamente. El acceso rápido no se activó; puedes activarlo al iniciar sesión otra vez.';
+        }
+        biometricState = await _biometrics.status();
+      }
       lastError = '';
+      // A data-load failure is not an incorrect-password error. Keep the session.
+      await retryConnection();
     } catch (error) {
       lastError = error.toString();
       rethrow;
     } finally {
       _setBusy(false);
     }
+  }
+
+  Future<void> loginWithBiometrics() async {
+    if (busy) return;
+    _setBusy(true, 'Verificando tu identidad…');
+    SavedLogin credentials;
+    try {
+      credentials = await _biometrics.read();
+    } on BiometricAccessException catch (error) {
+      if (error.requiresPassword) await _expireSession();
+      rethrow;
+    } finally {
+      biometricState = await _biometrics.status();
+      _setBusy(false);
+    }
+    await login(credentials.email, credentials.password, fromBiometrics: true);
+  }
+
+  Future<void> forgetBiometrics() async {
+    if (busy) return;
+    await _biometrics.delete();
+    // Forgetting the biometric vault is not permission to resume its session.
+    await _expireSession();
+    biometricState = await _biometrics.status();
+    notifyListeners();
   }
 
   Future<void> logout() async {
@@ -89,6 +160,7 @@ class AdminController extends ChangeNotifier {
     } finally {
       await _store.clear();
       session = null;
+      _api.sessionToken = '';
       data = {};
       status = AdminStatus.signedOut;
       _setBusy(false);
