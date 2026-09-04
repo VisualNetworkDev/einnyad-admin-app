@@ -14,14 +14,9 @@ class SavedLogin {
 }
 
 class BiometricAccessException implements Exception {
-  const BiometricAccessException(
-    this.message, {
-    this.cancelled = false,
-    this.requiresPassword = false,
-  });
+  const BiometricAccessException(this.message, {this.cancelled = false});
   final String message;
   final bool cancelled;
-  final bool requiresPassword;
   @override
   String toString() => message;
 }
@@ -45,8 +40,7 @@ class BiometricAccess {
         enabled: result?['enabled'] == true,
       );
     } on PlatformException {
-      // Do not bypass a previously enabled gate if the platform cannot report it.
-      return const BiometricState(enabled: true);
+      return const BiometricState();
     } on MissingPluginException {
       return const BiometricState();
     }
@@ -82,8 +76,6 @@ class BiometricAccess {
         error.message ??
             'No se pudo verificar tu identidad. Usa tu contraseña.',
         cancelled: error.code == 'cancelled',
-        requiresPassword:
-            error.code == 'invalidated' || error.code == 'missing',
       );
     } on MissingPluginException {
       throw const BiometricAccessException(

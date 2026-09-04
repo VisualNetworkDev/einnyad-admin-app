@@ -8,7 +8,6 @@ import 'core/notification_service.dart';
 import 'core/session_store.dart';
 import 'core/update_service.dart';
 import 'screens/admin_shell.dart';
-import 'screens/connection_screen.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_logo.dart';
@@ -112,9 +111,6 @@ class _EinnyadAdminAppState extends State<EinnyadAdminApp>
         return switch (_controller.status) {
           AdminStatus.initializing => const _SplashScreen(),
           AdminStatus.signedOut => LoginScreen(controller: _controller),
-          AdminStatus.connectionError => ConnectionScreen(
-            controller: _controller,
-          ),
           AdminStatus.ready => AdminShell(controller: _controller),
         };
       },

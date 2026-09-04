@@ -36,18 +36,6 @@ class _AdminShellState extends State<AdminShell> {
   AdminSection _section = AdminSection.dashboard;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  @override
-  void initState() {
-    super.initState();
-    final notice = widget.controller.accessNotice;
-    widget.controller.accessNotice = '';
-    if (notice.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) showMessage(context, notice);
-      });
-    }
-  }
-
   Widget _body() => switch (_section) {
     AdminSection.dashboard => DashboardScreen(
       controller: widget.controller,

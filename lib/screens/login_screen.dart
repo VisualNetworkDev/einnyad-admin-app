@@ -36,7 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (widget.controller.busy) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _error = '');
     try {
@@ -56,7 +55,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await widget.controller.loginWithBiometrics();
     } on BiometricAccessException catch (error) {
-      if (mounted && !error.cancelled) setState(() => _error = error.message);
+      if (mounted && !error.cancelled) {
+        setState(() => _error = error.message);
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     }
@@ -159,8 +160,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                           TextFormField(
                             controller: _email,
-                            enabled: !widget.controller.busy,
-                            autocorrect: false,
                             keyboardType: TextInputType.emailAddress,
                             autofillHints: const [AutofillHints.username],
                             textInputAction: TextInputAction.next,
@@ -169,16 +168,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               prefixIcon: Icon(Icons.email_outlined),
                             ),
                             validator: (value) =>
-                                RegExp(
-                                  r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                                ).hasMatch((value ?? '').trim())
+                                (value ?? '').trim().contains('@')
                                 ? null
                                 : 'Escribe el correo administrativo.',
                           ),
                           const SizedBox(height: 14),
                           TextFormField(
                             controller: _password,
-                            enabled: !widget.controller.busy,
                             obscureText: _hidePassword,
                             autofillHints: const [AutofillHints.password],
                             onFieldSubmitted: (_) => _login(),
@@ -219,13 +215,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
-                          if (_error.isNotEmpty ||
-                              widget.controller.lastError.isNotEmpty) ...[
+                          if (_error.isNotEmpty) ...[
                             const SizedBox(height: 14),
                             Text(
-                              _error.isNotEmpty
-                                  ? _error
-                                  : widget.controller.lastError,
+                              _error,
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.error,
                               ),

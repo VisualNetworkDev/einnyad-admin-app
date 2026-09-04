@@ -5,8 +5,6 @@ Aplicación Flutter nativa para Android y iOS que replica el panel administrativ
 ## Funciones incluidas
 
 - Login de dueña y sesión guardada en el almacenamiento seguro del sistema.
-- Acceso rápido Android con huella o rostro de seguridad fuerte compatible, activado voluntariamente después de verificar la contraseña.
-- Recuperación de conexión sin borrar una sesión válida por un error temporal del servidor.
 - Dashboard, métricas, agenda semanal y servicios más pedidos.
 - Buscar, filtrar, crear, editar, cancelar y borrar citas.
 - Cambiar estados, reenviar recibos y editar datos de pago.

@@ -8,15 +8,10 @@ import 'app_config.dart';
 import 'value_helpers.dart';
 
 class AdminApiException implements Exception {
-  const AdminApiException(
-    this.message, {
-    this.sessionExpired = false,
-    this.httpStatus,
-  });
+  const AdminApiException(this.message, {this.sessionExpired = false});
 
   final String message;
   final bool sessionExpired;
-  final int? httpStatus;
 
   @override
   String toString() => message;
@@ -58,24 +53,11 @@ class AdminApi {
       'userAgent': AppConfig.userAgent,
     };
     try {
-      final fields = {
+      final response = await _postForm({
         'mobile': '1',
         'action': action,
         'payload': jsonEncode(body),
-      };
-      var response = await _postForm(
-        fields,
-        timeout: const Duration(seconds: 70),
-      );
-      // Only replay the complete POST for this read-only operation. Never
-      // duplicate a login, reservation, edit, payment, or image upload.
-      if (action == 'getAdminData' && _isTransient(response.statusCode)) {
-        await Future<void>.delayed(const Duration(milliseconds: 400));
-        response = await _postForm(
-          fields,
-          timeout: const Duration(seconds: 70),
-        );
-      }
+      }, timeout: const Duration(seconds: 70));
       return _decodeResponse(response);
     } on AdminApiException {
       rethrow;
@@ -87,10 +69,8 @@ class AdminApi {
       throw const AdminApiException(
         'El servidor respondió con un formato inesperado.',
       );
-    } catch (_) {
-      throw const AdminApiException(
-        'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo otra vez.',
-      );
+    } catch (error) {
+      throw AdminApiException('No se pudo conectar con el servidor: $error');
     }
   }
 
@@ -124,10 +104,8 @@ class AdminApi {
       throw const AdminApiException(
         'El servidor no confirmó la subida de la imagen.',
       );
-    } catch (_) {
-      throw const AdminApiException(
-        'No se pudo confirmar la subida. Revisa tu conexión antes de volver a subir la imagen.',
-      );
+    } catch (error) {
+      throw AdminApiException('No se pudo subir la imagen: $error');
     }
   }
 
@@ -138,24 +116,16 @@ class AdminApi {
     var uri = _endpoint;
     var method = 'POST';
     for (var redirects = 0; redirects <= 5; redirects += 1) {
-      http.Response? received;
-      for (var attempt = 0; attempt < 2; attempt++) {
-        final request = http.Request(method, uri)
-          ..followRedirects = false
-          ..maxRedirects = 0
-          ..headers['Accept'] = 'application/json';
-        if (method == 'POST') request.bodyFields = fields;
-        final streamed = await _client.send(request).timeout(timeout);
-        received = await http.Response.fromStream(streamed).timeout(timeout);
-        // Retry only Google's redirected response GET, not the original write.
-        if (method != 'GET' ||
-            !_isTransient(received.statusCode) ||
-            attempt == 1) {
-          break;
-        }
-        await Future<void>.delayed(const Duration(milliseconds: 400));
-      }
-      final response = received!;
+      final request = http.Request(method, uri)
+        ..followRedirects = false
+        ..maxRedirects = 0
+        ..headers['Accept'] = 'application/json';
+      if (method == 'POST') request.bodyFields = fields;
+
+      final streamed = await _client.send(request).timeout(timeout);
+      final response = await http.Response.fromStream(
+        streamed,
+      ).timeout(timeout);
       if (!_isRedirect(response.statusCode)) return response;
 
       if (redirects == 5) {
@@ -196,16 +166,10 @@ class AdminApi {
       statusCode == 307 ||
       statusCode == 308;
 
-  static bool _isTransient(int status) =>
-      status == 404 || status == 408 || status == 429 || status >= 500;
-
   JsonMap _decodeResponse(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 400) {
       throw AdminApiException(
-        response.statusCode == 404
-            ? 'Google no pudo entregar la respuesta (404). Reintenta en unos segundos. Esto no indica que la contraseña sea incorrecta.'
-            : 'El servidor respondió con estado ${response.statusCode}. Inténtalo de nuevo en unos segundos.',
-        httpStatus: response.statusCode,
+        'El servidor respondió con estado ${response.statusCode}.',
       );
     }
     final raw = utf8.decode(response.bodyBytes);
@@ -230,11 +194,7 @@ class AdminApi {
         envelope['message'],
         'La operación no se completó.',
       );
-      final lower = message
-          .toLowerCase()
-          .replaceAll('ó', 'o')
-          .replaceAll('á', 'a')
-          .replaceAll('sesion', 'session');
+      final lower = message.toLowerCase();
       throw AdminApiException(
         message,
         sessionExpired:
